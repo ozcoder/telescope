@@ -1,7 +1,3 @@
-/**
- * For more details on how to configure Wrangler, refer to:
- * https://developers.cloudflare.com/workers/wrangler/configuration/
- */
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "telescopetest-io",
@@ -9,41 +5,78 @@
   "main": "./dist/_worker.js/index.js",
   "compatibility_date": "2025-11-18",
   "compatibility_flags": ["nodejs_compat", "global_fetch_strictly_public"],
-  "assets": {
-    "binding": "ASSETS",
-    "directory": "./dist",
-  },
   "observability": {
     "enabled": true,
   },
-  "routes": [
-    {
-      "pattern": "telescopetest.io",
-      "custom_domain": true,
+  "env": {
+    "development": {
+      "assets": {
+        "binding": "ASSETS",
+        "directory": "./dist",
+      },
+      "d1_databases": [
+        {
+          "binding": "TELESCOPE_DB",
+          "database_name": "telescope-db-development",
+          "database_id": "9cb42d60-b1d5-4447-a04b-86ea48225f87",
+        },
+      ],
+      "r2_buckets": [
+        {
+          "binding": "RESULTS_BUCKET",
+          "bucket_name": "results-bucket-development",
+        },
+      ],
     },
-  ],
-
-  /**
-   * Smart Placement
-   * https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
-   */
-  // "placement": {  "mode": "smart" }
-  /**
-   * Bindings
-   * Bindings allow your Worker to interact with resources on the Cloudflare Developer Platform, including
-   * databases, object storage, AI inference, real-time communication and more.
-   * https://developers.cloudflare.com/workers/runtime-apis/bindings/
-   */
-  /**
-   * Environment Variables
-   * https://developers.cloudflare.com/workers/wrangler/configuration/#environment-variables
-   * Note: Use secrets to store sensitive data.
-   * https://developers.cloudflare.com/workers/configuration/secrets/
-   */
-  // "vars": {  "MY_VARIABLE": "production_value" }
-  /**
-   * Service Bindings (communicate between multiple Workers)
-   * https://developers.cloudflare.com/workers/wrangler/configuration/#service-bindings
-   */
-  // "services": [  {   "binding": "MY_SERVICE",   "service": "my-service"  } ]
+    "staging": {
+      "routes": [
+        {
+          "pattern": "staging.telescopetest.io",
+          "custom_domain": true,
+        },
+      ],
+      "assets": {
+        "binding": "ASSETS",
+        "directory": "./dist",
+      },
+      "d1_databases": [
+        {
+          "binding": "TELESCOPE_DB",
+          "database_name": "telescope-db-staging",
+          "database_id": "88626165-c6c0-42bf-9e7d-c9317aa98968",
+        },
+      ],
+      "r2_buckets": [
+        {
+          "binding": "RESULTS_BUCKET",
+          "bucket_name": "results-bucket-staging",
+        },
+      ],
+    },
+    "production": {
+      "routes": [
+        {
+          "pattern": "telescopetest.io",
+          "custom_domain": true,
+        },
+      ],
+      "assets": {
+        "binding": "ASSETS",
+        "directory": "./dist",
+      },
+      "d1_databases": [
+        {
+          "binding": "TELESCOPE_DB",
+          "database_name": "telescope-db",
+          "database_id": "db0baebd-6b49-434b-bc31-fc9224ef4585",
+        },
+      ],
+      "r2_buckets": [
+        {
+          "binding": "RESULTS_BUCKET",
+          "bucket_name": "results-bucket",
+        },
+      ],
+    },
+  },
 }
