@@ -1,281 +1,103 @@
-# Browser Agent
+# Telescope
 
-A diagnostic, cross-browser performance testing agent.
+A cross-browser web performance testing toolkit built on [Playwright](https://playwright.dev/). This repository is a monorepo containing two packages:
 
-## What it collects
+| Package                                              | Description                                                                              |
+| ---------------------------------------------------- | ---------------------------------------------------------------------------------------- |
+| [`packages/telescope`](./packages/telescope)         | Core CLI and library (`@cloudflare/telescope`)                                           |
+| [`packages/telescope-web`](./packages/telescope-web) | Web app for uploading and viewing results ([telescopetest.io](https://telescopetest.io)) |
 
-When you run the agent, it will load the page in the browser you chose and apply any special parameters you have provided. By default, it will store results for the test in a `/results` directory. Each test gets its own folder with the date prefixed, followed by a unique ID.
+---
 
-Inside the test folder, the following files are added:
+## packages/telescope
 
-- `console.json` - Console output from the page to look for warnings, JS errors, etc
-- a video file showing the page load progression
-- `metrics.json` - A collection of timing metrics collected from the browser during page load
-- `pageload.har` - A har file of the page load
-- `resources.json` - The resource timing API data for the page
-- `screenshot.png` - A screenshot of the final page load
-- `/filmstrip` - A collection of screenshots during the page load that could be used for a filmstrip
+A TypeScript CLI and Node.js library that launches real browsers, collects performance data, and saves results locally.
 
-## Parameters
+**Supported browsers:** Chrome, Chrome Beta, Chrome Canary, Edge, Firefox, Safari (WebKit)
 
-A full list of parameters can be printed to the terminal by running `npx . --help`. Here's what's currently supported:
+**What it collects per test:**
 
-```
-Options:
-  -u, --url <url>               URL to run tests against
-  -b, --browser <browser_name>  Browser to run tests with (choices: "chrome", "chrome-beta", "canary", "edge", "safari", "firefox", default: "chrome")
-  -h, --headers <object>        Any custom headers to apply to requests
-  -c, --cookies <object>        Any custom cookies to apply
-  -f, --flags <string>          A comma separated list of Chromium flags to launch Chrome with. See: https://peter.sh/experiments/chromium-command-line-switches/
-  --agentExtra <string>         A string to append to the end of the default User-Agent. Takes precedence over --userAgent option.
-  --blockDomains <domains...>   A comma separated list of domains to block
-  --block <substrings...>       A comma-delimited list of urls to block (based on a substring match)
-  --delay <object>              An object mapping request regexes to response delays. Example: '{".css$": 2000, ".js$": 5000}'
-  --delayUsing <string>         Method to use to delay responses (choices: "continue", "fulfill", default: "continue")
-  --firefoxPrefs <object>       Any Firefox User Preferences to apply (Firefox only). Example: '{"network.trr.mode": 2}'
-  --cpuThrottle <int>           CPU throttling factor
-  --connectionType <string>     Network connection type. By default, no throttling is applied. (choices: "cable", "dsl", "4g", "3g", "3gfast", "3gslow", "2g", "fios", default: false)
-  --width <int>                 Viewport width, in pixels (default: "1366")
-  --height <int>                Viewport height, in pixels (default: "768")
-  --frameRate <int>             Filmstrip frame rate, in frames per second (default: 1)
-  --disableJS                   Disable JavaScript (default: false)
-  --debug                       Output debug lines (default: false)
-  --auth <object>               Basic HTTP authentication (Expects: {"username": "", "password": ""}) (default: false)
-  --timeout <int>               Maximum time (in milliseconds) to wait for test to complete (default: 30000)
-  --html                        Generate HTML report (default: false)
-  --openHtml                    Open HTML report in browser (requires --html) (default: false)
-  --list                        Generate list of results in HTML (default: false)
-  --overrideHost <object>       Override the hostname of a URI with another host (Expects: {"example.com": "example.org"})
-  --userAgent <string>          Set the browsers User-Agent
-  --zip                         Zip the results of the test into the results directory. (default: false)
-  --uploadUrl <string>          Upload results to URL. Must be a valid URL if provided. (default: null)
-  --dry                         Dry run (do not run test, just save config and cleanup) (default: false)
-  --help                        display help for command
-```
+- HAR file (`pageload.har`)
+- Web Vitals and performance metrics (`metrics.json`)
+- Console output (`console.json`)
+- Resource timing data (`resources.json`)
+- Screenshot (`screenshot.png`)
+- Filmstrip and video of the page load
 
-### Browser Support
+### Quick start
 
-Telescope uses Playwright to control and manage individual browser engines:
-
-```
-npx . -u https://www.example.com -b firefox
-```
-
-And supports the following browsers:
-
-- [Chromium](https://www.chromium.org/Home/)
-  - [Chrome](https://www.google.com/chrome/) - `chrome`
-  - [Chrome Beta](https://www.google.com/chrome/beta/) - `chrome-beta`
-  - [Chrome Canary](https://www.google.com/chrome/canary/) - `canary`
-  - [Edge](https://www.microsoft.com/en-us/edge/) - `edge`
-- [Safari](https://www.apple.com/safari/)/[Webkit](https://webkit.org/) - `safari`
-- [Firefox](https://www.firefox.com/) - `firefox`
-
-### Custom Timeout
-
-You can set a custom timeout by passing the desired timeout in milliseconds using the `--timeout` parameter. Defaults to 30000, or 30 seconds.
-
-```
-npx . -u https://www.example.com -b chrome --timeout 50000
-```
-
-### HTML Report Generation
-
-**Browser Support**
-✅ Edge
-✅ Chrome
-✅ Safari
-✅ Firefox
-
-You can generate an HTML report of your test results by passing the `--html` parameter. To automatically open the report in your default browser after generation, add the `--openHtml` flag.
-
-#### Generate HTML report
-
-```
-npx . -u https://example.com -b chrome --html
-```
-
-#### Generate and automatically open HTML report
-
-```
-npx . -u https://example.com -b chrome --html --openHtml
-```
-
-### Setting Custom Cookies
-
-**Browser support**
-✅ Edge
-✅ Chrome
-🚫 Safari
-✅ Firefox
-
-You can define custom cookies to be passed along to request when running your test using the `-c` or `--cookies` parameter.
-
-Cookies must have a name and value passed. Optionally, you can also pass in either a URL or a domain and path. If none are passed, the script will default to using the test page url.
-
-#### Set a custom cookie for all requests
-
-```
-npx . -u https://www.example.com -b chrome -c '{"name": "foo", "value": "bar"}'
-```
-
-#### Set multiple cookies for all requests
-
-```
-npx . -u https://www.example.com -b chrome -c '[{"name": "foo", "value": "bar"}, {"name": "foo2", "value": "bar2"}]'
-```
-
-#### Set a custom cookie for only a particular path
-
-```
-npx . -u https://www.example.com -b chrome -c '{"name": "foo", "value": "bar", "domain":"www.example.com", "path":"/optim"}'
-```
-
-### Disabling JavaScript
-
-**Browser Support**
-✅ Edge
-✅ Chrome
-✅ Safari
-✅ Firefox
-
-You can run tests with JavaScript disabled to see the impact on performance by passing the `--disableJS` parameter like so:
-
-```
-npx . -u https://playwright.dev/ -b firefox --disableJS
-```
-
-### Basic HTTP Authentication
-
-**Browser Support**
-✅ Edge
-✅ Chrome
-✅ Safari
-✅ Firefox
-
-To test sites [protected with HTTP authentication](https://developer.mozilla.org/en-US/docs/Web/HTTP/Authentication), you can pass the `--auth` parameter. It expects an object with a `username` and `password` like so:
-
-```
-npx . -u https://newsletter.www.example.com/admin -b safari --auth '{"username": "username", "password": "password"}'
-```
-
-## Docker
-
-Build and run telescope in a container:
+From the repo root:
 
 ```bash
-# Build
-docker compose build
-
-# Run a test
-docker compose run --rm telescope -u https://example.com -b chrome
-
-# Run with network throttling
-docker compose run --rm telescope -u https://example.com -b chrome --connectionType 3g
-
-# Results are saved to ./results/
+npm install
+npm run build -w packages/telescope
+npx . -u https://example.com -b chrome
 ```
 
-Supports: Chrome, Chrome Beta, Edge, Firefox, and Safari (WebKit).
+Or from `packages/telescope/` directly:
 
-### Network Throttling Limitation
-
-Network throttling (`--connectionType`) requires OS-level traffic shaping via the Linux `ifb` kernel module. This works on native Linux machines but **does not work in Docker Desktop (Mac or Windows)**, because the Docker Desktop Linux VM does not include the required kernel module.
-
-## Installation
-
-### NPM dependencies
-
-After checking out the code, you need to install all the dependencies and build the project:
-
-```
+```bash
+cd packages/telescope
 npm install
 npm run build
+npx . -u https://example.com -b chrome
 ```
 
-### Browsers
+Or install from npm and use the CLI:
 
-### Chrome, Firefox, and Safari
-
-Telescope will automatically run `npx playwright install` to install `chrome`, `firefox`, and `safari`.
-
-### Microsoft Edge and Chrome-beta
-
-To install Microsoft Edge or Chrome Beta playwright requires root privileges and will not automatically install them, all you have to do that is to run `npx playwright install msedge chrome-beta` from the command line (and provide root password).
-
-### Chrome Canary
-
-Chrome Canary must be manually installed, please download and install from: https://www.google.com/chrome/canary/
-
-### ffmpeg
-
-Telescope uses `ffmpeg` to process the video and generate filmstrip images. You will need to have it installed on your machine.
-
-For MacOS you can use `homebrew` to install it:
-
-```
-brew install ffmpeg
+```bash
+npm install -g @cloudflare/telescope
+telescope -u https://example.com -b chrome
 ```
 
-## Programmatic Usage
+See [`packages/telescope/README.md`](./packages/telescope/README.md) for full documentation.
 
-You can run telescope from within a Node.js script:
+---
 
-```javascript
-import { launchTest } from '@cloudflare/telescope';
+## packages/telescope-web
 
-const result = await launchTest({
-  url: 'https://example.com',
-  browser: 'chrome',
-  width: 1920,
-  height: 1080,
-  timeout: 60000,
-});
+The Astro + Cloudflare Workers web application hosted at [telescopetest.io](https://telescopetest.io). Users upload Telescope ZIP results and view an interactive breakdown of metrics, waterfall, filmstrip, console logs, and more.
 
-if (result.success) {
-  console.log(`Test completed: ${result.testId}`);
-  console.log(`Results saved to: ${result.resultsPath}`);
-} else {
-  console.error(`Test failed: ${result.error}`);
-}
+**Stack:** Astro v6, Cloudflare Workers, D1 (SQLite via Prisma), R2, Workers AI
+
+### Quick start
+
+```bash
+cd packages/telescope-web
+npm install
+npm run dev:setup  # one-time setup: DB, migrations, Prisma client, type generation
+npm run dev
 ```
 
-All CLI options are supported as object properties. See Parameters section for available options.
+See [`packages/telescope-web/README.md`](./packages/telescope-web/README.md) for full documentation.
 
-## Contributing To This Project
+---
 
-### Running Automated Tests
-
-To run automated code tests in this project, you can use the following command:
+## Repository structure
 
 ```
-npm run test
+packages/
+  telescope/          # Core CLI and library
+    src/              # TypeScript source
+    __tests__/        # Integration tests (Vitest)
+    tests/            # Static test fixtures
+    processors/       # Standalone HTML report generator
+    support/          # Browser support files
+  telescope-web/      # telescopetest.io web app
+    src/              # Astro pages, components, and server logic
+    migrations/       # D1 SQL migrations
+    prisma/           # Prisma schema
+.github/
+  workflows/
+    test.yml          # CI: builds and tests packages/telescope on every PR
+    deploy.yml        # CD: deploys packages/telescope-web on merge to main
 ```
 
-#### Using Specific Browsers
+## CI
 
-You can run tests with [specific browsers](#browser-support) by setting the `BROWSERS` environment variable. For example, to run tests with Chrome and Firefox, you can run:
+- **`test.yml`** — runs on every push and PR (excluding `packages/telescope-web/**` changes). Builds `packages/telescope` and runs the full browser test suite inside the official Playwright Docker container.
+- **`deploy.yml`** — runs on push to `main` when `packages/telescope-web/**` changes. Applies D1 migrations, builds, and deploys to Cloudflare Workers.
 
-```
-BROWSERS=chrome,firefox npm run test
-```
+## License
 
-The same browser can be listed more than once; each occurrence will run as a separate test pass. This can be useful for debugging side effects of running multiple tests on the same browser or just long tests.
-
-Note: `BROWSERS` environment variable is ignored when [running in CI](#our-ci-pipeline).
-
-#### Running Tests In Headless Mode
-
-You can run tests in headless mode by setting the `HEADLESS` environment variable to `true`. For example:
-
-```
-HEADLESS=true npm run test
-```
-
-#### Our CI Pipeline
-
-Our CI pipeline is set up to run tests on every push to the repository so you can see results in your pull request.
-
-At this point, to limit the length of the tests and (to simplify compatibility with GitHub Actions) it runs tests in headless mode on `firefox` only.
-
-If you want to run the same configuration locally, you can run `CI=true npm test`. You can override the default headless CI mode by setting the `HEADLESS` environment variable to `false`. However, you can't override the set of browsers that the CI configuration runs (it will always run `firefox` only).
+Apache 2.0 — see [LICENSE](./LICENSE).
