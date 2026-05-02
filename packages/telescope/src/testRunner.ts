@@ -70,7 +70,7 @@ class TestRunner {
   paths: TestPaths = {} as TestPaths;
   priorities: PriorityInfo = {} as PriorityInfo;
   requests: RequestData[] = [];
-  requestHashToId: Record<string, string> = {};
+  telescopeIdToRequestId: Record<string, string> = {};
   resultAssets: ResultAssets = {
     filmstripFiles: [],
     videoFile: null,
@@ -932,9 +932,8 @@ class TestRunner {
           updatedObject._is_lcp = true;
         }
 
-        if (this.requestHashToId) {
-          const hashString = crypto.createHash('sha256').update(request.url + request.timing.requestStart).digest('hex');
-          const requestId = this.requestHashToId[hashString];
+        if (this.telescopeIdToRequestId) {
+          const requestId = this.telescopeIdToRequestId[request.telescopeId];
 
           if (requestId && this.priorities && this.priorities[requestId]) {
             const priority_obj = this.priorities[requestId];
