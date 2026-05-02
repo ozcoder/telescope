@@ -1,0 +1,393 @@
+---
+interface Props {
+  hideThemeSwitcher?: boolean;
+}
+const { hideThemeSwitcher = false } = Astro.props;
+const currentPath = Astro.url.pathname;
+
+const navItems = [
+  { label: 'Home', href: '/' },
+  { label: 'Results', href: '/results' },
+  { label: 'Upload', href: '/upload' },
+];
+---
+
+<header class="top-nav">
+  <div class="left">
+    <a class="brand" href="/">Telescope</a>
+    <nav>
+      <ul>
+        {
+          navItems.map(item => (
+            <li>
+              <a
+                class={currentPath === item.href ? 'active' : ''}
+                href={item.href}
+              >
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+  </div>
+  <div class="actions">
+    {!hideThemeSwitcher && (
+      <button class="theme-toggle" type="button" aria-label="Toggle theme"
+      ></button>
+    )}
+    <a
+      class="gh"
+      href="https://github.com/cloudflare/telescope"
+      target="_blank"
+      rel="noreferrer"
+    >
+      GitHub ↗
+    </a>
+  </div>
+  <button class="hamburger" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+</header>
+
+<div id="mobile-menu" class="mobile-menu" aria-hidden="true">
+  <nav class="mobile-nav">
+    <ul>
+      {
+        navItems.map(item => (
+          <li>
+            <a
+              class={currentPath === item.href ? 'active' : ''}
+              href={item.href}
+            >
+              {item.label}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </nav>
+  <div class="mobile-actions">
+    {!hideThemeSwitcher && (
+      <button class="theme-toggle mobile-theme-toggle" type="button" aria-label="Toggle theme"></button>
+    )}
+    <a
+      class="gh"
+      href="https://github.com/cloudflare/telescope"
+      target="_blank"
+      rel="noreferrer"
+    >
+      GitHub ↗
+    </a>
+  </div>
+</div>
+
+<style>
+  :root {
+    --nav-height: 3.5rem; /* height (2.5rem) + padding top/bottom (0.5rem each) */
+  }
+
+  header {
+    width: calc(100% - 2.5rem);
+    max-width: calc(100% - 2.5rem);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    height: 2.5rem; /* 30px */
+    padding: 0.5rem 1.5rem;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    margin: 0 auto;
+    z-index: 100;
+    background: var(--nav-bg);
+    backdrop-filter: blur(0.625rem); /* 10px */
+    border-radius: 0.5rem; /* 8px */
+  }
+
+  .left {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem; /* 14px */
+  }
+
+  .brand {
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    text-decoration: none;
+    padding: 0.5rem 0.625rem; /* 8px 10px */
+    border-radius: 0.75rem; /* 12px */
+  }
+
+  nav ul {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem; /* 6px */
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  nav a {
+    color: var(--muted);
+    text-decoration: none;
+    padding: 0.5rem 0.625rem; /* 8px 10px */
+    border-radius: 0.75rem; /* 12px */
+    border: 1px solid transparent;
+    font-size: 0.875rem; /* 14px */
+  }
+
+  nav a:hover {
+    border-color: var(--border);
+    background: var(--panel);
+    color: var(--text);
+  }
+
+  nav a.active {
+    color: var(--text);
+    border-color: var(--brand-hover);
+    background: linear-gradient(135deg, var(--brand-bg), var(--brand-bg-alt));
+  }
+
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 0.875rem; /* 14px */
+  }
+
+  .theme-toggle {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text);
+    cursor: pointer;
+    padding: 0.375rem 0.625rem; /* 6px 10px */
+    border-radius: 0.75rem; /* 12px */
+    font-size: 1rem; /* 16px */
+    line-height: 1;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .theme-toggle::after {
+    content: '🌙';
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .theme-toggle::after {
+      content: '☀️';
+    }
+  }
+
+  :global([data-theme-override='dark']) .theme-toggle::after {
+    content: '☀️';
+  }
+
+  :global([data-theme-override='light']) .theme-toggle::after {
+    content: '🌙';
+  }
+
+  .theme-toggle:hover {
+    background: var(--panel);
+    border-color: var(--brand-hover);
+  }
+
+  .gh {
+    color: var(--muted);
+    text-decoration: none;
+    padding: 0.5rem 0.625rem; /* 8px 10px */
+    border-radius: 0.75rem; /* 12px */
+    border: 1px solid var(--border);
+    font-size: 0.875rem; /* 14px */
+    white-space: nowrap;
+  }
+
+  .gh:hover {
+    color: var(--text);
+    border-color: var(--brand-hover);
+  }
+
+  /* Hamburger button — hidden on desktop */
+  .hamburger {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 0.3rem;
+    background: transparent;
+    border: 1px solid var(--border, rgba(128, 128, 128, 0.4));
+    border-radius: 0.75rem; /* 12px */
+    cursor: pointer;
+    padding: 0.375rem 0.5rem;
+    width: 2.25rem;
+    height: 2.25rem;
+    color: var(--text);
+  }
+
+  .hamburger span {
+    display: block;
+    width: 1.125rem;
+    height: 0.125rem;
+    background: currentColor;
+    border-radius: 1px;
+    transition: all 0.2s ease;
+  }
+
+  .hamburger:hover {
+    background: var(--panel);
+    border-color: var(--brand-hover);
+  }
+
+  /* Mobile menu — hidden by default */
+  .mobile-menu {
+    display: none;
+    position: fixed;
+    top: calc(var(--nav-height) + 0.25rem);
+    left: 1.25rem;
+    right: 1.25rem;
+    z-index: 99;
+    background: var(--nav-bg);
+    backdrop-filter: blur(0.625rem);
+    border: 1px solid var(--border, rgba(128, 128, 128, 0.3));
+    border-radius: 0.5rem;
+    padding: 0.75rem;
+  }
+
+  .mobile-menu.open {
+    display: block;
+  }
+
+  .mobile-nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .mobile-nav a {
+    display: block;
+    color: var(--muted);
+    text-decoration: none;
+    padding: 0.625rem 0.75rem;
+    border-radius: 0.5rem;
+    border: 1px solid transparent;
+    font-size: 0.9375rem;
+    line-height: 1.4;
+  }
+
+  .mobile-nav a:hover {
+    border-color: var(--border);
+    background: var(--panel);
+    color: var(--text);
+  }
+
+  .mobile-nav a.active {
+    color: var(--text);
+    border-color: var(--brand-hover);
+    background: linear-gradient(135deg, var(--brand-bg), var(--brand-bg-alt));
+  }
+
+  .mobile-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border, rgba(128, 128, 128, 0.3));
+    line-height: 1.4;
+  }
+
+  @media (max-width: 40rem) { /* 640px */
+    .left nav,
+    .actions {
+      display: none;
+    }
+
+    .hamburger {
+      display: flex;
+    }
+  }
+</style>
+
+<script>
+  function getCookie(name: string) {
+    const cookies = document.cookie.split(';');
+    for (let cookie of cookies) {
+      const [cookieName, cookieValue] = cookie.split('=', 2).map(c => c.trim());
+      if (cookieName === name) return cookieValue;
+    }
+  }
+
+  function setCookie(name: string, value: string, days: number) {
+    const d = new Date();
+    d.setTime(d.getTime() + days * 24 * 60 * 60 * 1000);
+    const expires = d.toUTCString();
+    const secure = window.location.protocol === 'https:' ? ';Secure' : '';
+    document.cookie = `${name}=${value};expires=${expires};path=/;SameSite=Lax${secure}`;
+  }
+
+  const savedTheme = getCookie('theme-override');
+
+  if (savedTheme === 'light' || savedTheme === 'dark') {
+    document.documentElement.setAttribute('data-theme-override', savedTheme);
+  }
+
+  function applyThemeToggles() {
+    const buttons = document.querySelectorAll('.theme-toggle') as NodeListOf<HTMLButtonElement>;
+    buttons.forEach(button => {
+      button.addEventListener('click', () => {
+        const isDark = document.documentElement.getAttribute(
+          'data-theme-override',
+        )
+          ? document.documentElement.getAttribute('data-theme-override') ===
+            'dark'
+          : window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+        const newTheme = isDark ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme-override', newTheme);
+        setCookie('theme-override', newTheme, 365);
+      });
+    });
+  }
+
+  applyThemeToggles();
+
+  const hamburger = document.querySelector('.hamburger') as HTMLButtonElement;
+  const mobileMenu = document.querySelector('.mobile-menu') as HTMLElement;
+
+  function closeMenu() {
+    mobileMenu.classList.remove('open');
+    hamburger.setAttribute('aria-expanded', 'false');
+    hamburger.setAttribute('aria-label', 'Open menu');
+    mobileMenu.setAttribute('aria-hidden', 'true');
+  }
+
+  if (hamburger && mobileMenu) {
+    hamburger.addEventListener('click', () => {
+      const isOpen = mobileMenu.classList.toggle('open');
+      hamburger.setAttribute('aria-expanded', String(isOpen));
+      hamburger.setAttribute('aria-label', isOpen ? 'Close menu' : 'Open menu');
+      mobileMenu.setAttribute('aria-hidden', String(!isOpen));
+    });
+
+    document.addEventListener('click', (e) => {
+      if (!hamburger.contains(e.target as Node) && !mobileMenu.contains(e.target as Node)) {
+        closeMenu();
+      }
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && mobileMenu.classList.contains('open')) {
+        closeMenu();
+        hamburger.focus();
+      }
+    });
+  }
+</script>
